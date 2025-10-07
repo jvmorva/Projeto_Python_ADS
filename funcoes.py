@@ -1,12 +1,12 @@
 import json
 
 
-def json_dump(lista, nome_arquivo):
+def json_dump(lista, nome_arquivo): #Função para ADICIONAR informações no arquivo json.
     with open(nome_arquivo, 'w', encoding="utf-8") as arquivo:
         json.dump(lista, arquivo, ensure_ascii=False)
 
 
-def json_load(nome_arquivo):
+def json_load(nome_arquivo): #Função para MOSTRAR informações no arquivo json.
     try:
         with open(nome_arquivo, 'r', encoding="utf-8") as arquivo:
             lista = json.load(arquivo)
@@ -42,72 +42,94 @@ def mostrar_menu_operacoes(): #Função para mostrar o menu de operações.
     return input("Selecione a opção desejada: ")
 
 
-def incluir_estudante(nome_arquivo): #Função para incluir estudante
+def incluir(nome_arquivo, chave1, chave2="vazio", chave3="vazio"): #Função para incluir. É genérica.
     while True:
-        estudantes = json_load(nome_arquivo)
-        cod = (input("\nDigite o código do estudante: "))  # Não estou deixando o input como "int" para evitar erros ao EXCLUIR/ATUALIZAR caso outra tecla, que não seja um número int, seja clicada.
-        nomeestudante = input("Digite o nome do estudante: ")
-        cpfdoaluno = input("Digite o CPF do estudante: ")
-        aluno = {}
-        aluno["código"] = cod
-        aluno["nome"] = nomeestudante
-        aluno["cpf"] = cpfdoaluno
-        estudantes.append(aluno)
-        json_dump(estudantes, nome_arquivo)
-        sair = input("Tecle 0 para sair e qualquer outra tecla para incluir outro estudante: ")
+        lista = json_load(nome_arquivo)
+        dicionario = {}
+        for chave in [chave1, chave2, chave3]:
+            if chave != "vazio": #Só pede "input" para os parâmetros passados, ignorando os de valor padrão.
+                while True:
+                    valor_da_chave = input(f"Digite o valor de {chave}: ")
+                    if valor_da_chave == "": #Impede que o usuário possa deixar o campo vazio.
+                        print("Este campo não pode estar vazio")
+                        continue
+                    if valor_da_chave.isdigit(): #Converte o valor para "int" caso o valor digitado seja um número inteiro. Infelizmente não existe uma função como esta para converter para float.
+                        valor_da_chave = int(valor_da_chave)
+                    dicionario[chave] = valor_da_chave
+                    break
+
+        lista.append(dicionario)
+        json_dump(lista, nome_arquivo)
+        print("\nInclusão bem sucedida.")
+        sair = input("Tecle 0 para sair e qualquer outra tecla para realizar uma nova inclusão: ")
         if sair == "0":
             break
 
 
 def listar(nome_arquivo): #Função para listar. É genérica.
-    estudantes = json_load(nome_arquivo) #Carrega a lista atual.
-    for elemento in estudantes:
+    lista = json_load(nome_arquivo)
+    for elemento in lista:
         print(elemento)
-    if estudantes == []:
-        print("Não há estudantes cadastrados")
+    if lista == []:
+        print("Não há dados cadastrados")
 
 
-def atualizar_estudante(nome_arquivo): #Função para atualizar estudantes.
-    while True:  # Loop opcional. Voltar para o menu depois de uma atualização também é ok.
-        estudantes = json_load(nome_arquivo) #Carrega a lista atual.
+def atualizar(nome_arquivo, chave1, chave2="vazio", chave3="vazio"): #Função para atualizar. É genérica.
+    while True:  #Loop opcional. Voltar para o menu depois de uma atualização também é ok.
+        lista = json_load(nome_arquivo)
 
-        codigo_para_atualizar = input("\nDigite o código do estudante que deseja atualizar: ")  # Não estou deixando o input como "int" para evitar erros ao EXCLUIR/ATUALIZAR caso outra tecla, que não seja um número int, seja clicada.
+        codigo_para_atualizar = input(f"\nDigite o valor do {chave1} do elemento que deseja atualizar: ")
+        if codigo_para_atualizar.isdigit(): #Converte o valor para "int" caso o valor digitado seja um número inteiro.
+           codigo_para_atualizar = int(codigo_para_atualizar)
+
         atualizar = None
-        for aluno in estudantes:
-            if aluno["código"] == codigo_para_atualizar:
-                atualizar = aluno
+        for elemento in lista:
+            if elemento[chave1] == codigo_para_atualizar:
+                atualizar = elemento
                 break
 
         if atualizar is None:
             print("\nEste código não pertence a nenhum aluno.")
         else:
-            atualizar["código"] = input("Digite o novo código do estudante: ")  # Não estou deixando o input como "int" para evitar erros ao EXCLUIR/ATUALIZAR caso outra tecla, que não seja um número int, seja clicada.
-            atualizar["nome"] = input("Digite o novo nome do estudante: ")
-            atualizar["cpf"] = input("Digite o novo CPF do estudante: ")
-            print("\nEstudante atualizado com sucesso.")
+            for chave in [chave1, chave2, chave3]:
+                if chave != "vazio": #Só pede "input" para os parâmetros passados, ignorando os de valor padrão.
+                    while True:
+                        novo_valor = input(f"Digite o novo valor de {chave}: ")
+                        if novo_valor == "": #Impede que o usuário possa deixar o campo vazio.
+                            print("Este campo não pode estar vazio")
+                            continue
+                        if novo_valor.isdigit(): #Converte o valor para "int" caso o valor digitado seja um número inteiro.
+                            novo_valor = int(novo_valor)
+                        atualizar[chave] = novo_valor
+                        break
 
-        json_dump(estudantes, nome_arquivo) #Da "dump" nas novas informações.
+        json_dump(lista, nome_arquivo)
+        print("\nAtualização bem sucedida.")
         sair = input("Tecle 0 para sair e qualquer outra tecla para incluir outro estudante: ")
         if sair == "0":
             break
 
 
 def excluir(nome_arquivo, chave_qualquer): #Função para excluir. É genérica.
-    while True:  # Loop opcional. Voltar para o menu depois de uma exclusão também é ok.
-        estudantes = json_load(nome_arquivo)
-        codigo_para_excluir = input(f"\nDigite o valor de {chave_qualquer} que deseja remover: ") #Deixamos que o usuário escolha a partir de qual chave ele vai deletar o item desejado.
-        excluir = None                                                                            #Isso permite que a função se torne genérica.
-        for elemento in estudantes:
+    while True:  #Loop opcional. Voltar para o menu depois de uma exclusão também é ok.
+        lista = json_load(nome_arquivo)
+        codigo_para_excluir = input(f"\nDigite o valor de {chave_qualquer} do item que deseja remover: ") #Deixamos que o usuário escolha a partir de qual chave ele vai deletar o item desejado.
+        if codigo_para_excluir.isdigit(): #Converte o valor para "int" caso o valor digitado seja um número inteiro.
+            codigo_para_excluir = int(codigo_para_excluir)
+
+        excluir = None
+        for elemento in lista:
             if elemento[chave_qualquer] == codigo_para_excluir:
                 excluir = elemento
                 break
 
         if excluir is None:
-            print("\nEste código não pertence a nenhum aluno.")
+            print("\nEste código não pertence a nenhum item.")
         else:
-            estudantes.remove(excluir)
-            print("\nEstudante excluído com sucesso.")
-        json_dump(estudantes, nome_arquivo)
-        sair = input("Tecle 0 para sair e qualquer outra tecla para excluir outro estudante:")
+            lista.remove(excluir)
+            print("\nItem excluído com sucesso.")
+
+        json_dump(lista, nome_arquivo)
+        sair = input("Tecle 0 para sair e qualquer outra tecla para excluir outro item:")
         if sair == "0":
             break
